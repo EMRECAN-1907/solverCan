@@ -1,0 +1,379 @@
+================================================================
+  solverCan — Complete Guide with Examples
+  Mathematical Function Solver from Dataset
+  Version: 0.1.0
+================================================================
+
+
+================================================================
+  INSTALLATION
+================================================================
+
+  pip install solverCan
+
+
+================================================================
+  QUICK START
+================================================================
+
+  import solverCan
+
+  y = [14, 13, 14, 17, 22, 29, 38, 49, 62, 77]
+  r = solverCan.auto(y)
+  print(r['equation'])       # f(x) = x^2 - 4*x + 17
+  print(r['compute'](15))    # 182.0
+
+
+================================================================
+  1. POLYNOMIAL — solverCan.plynm(y)
+================================================================
+
+  Finds polynomial equation using forward differences + Gauss elimination.
+  Best for: polynomial data (x^2, x^3, etc.)
+
+  Example:
+  --------
+  import solverCan
+
+  # Data from f(x) = x^2 - 4x + 17
+  y = [14, 13, 14, 17, 22, 29, 38, 49, 62, 77]
+
+  r = solverCan.plynm(y)
+  print(r['equation'])        # f(x) = x^2 - 4*x + 17
+  print(r['method'])          # Polynomial (degree 2)
+  print(r['degree'])          # 2
+  print(r['coefficients'])    # [17, -4, 1]
+  print(r['compute'](15))     # 182.0
+
+
+================================================================
+  2. EXPONENTIAL — solverCan.expo(y)
+================================================================
+
+  Finds exponential equation using derivative ratio analysis.
+  Best for: exponential data (a*e^(bx) + c)
+
+  Example:
+  --------
+  import solverCan
+
+  # Population growth data: P(t) = 50000 * e^(0.03t)
+  y = [50000.0, 51522.73, 53091.83, 54708.71, 56374.84,
+       58091.71, 59860.87, 61683.9, 63562.46, 65498.22]
+
+  r = solverCan.expo(y)
+  print(r['equation'])        # f(x) = 48512.2507*exp(0.029999*x) + 10.3611
+  print(r['method'])          # Exponential (2 iterations)
+  print(r['compute'](20))     # ~88403.68  (20 year prediction)
+
+  # Another example: Newton cooling T(t) = 25 + 75*e^(-0.1t)
+  y2 = [92.86, 86.4, 80.56, 75.27, 70.49, 66.16, 62.24, 58.7, 55.49, 52.59]
+  r2 = solverCan.expo(y2)
+  print(r2['equation'])
+
+
+================================================================
+  3. TRIGONOMETRIC (Piecewise) — solverCan.trig(y)
+================================================================
+
+  Finds trigonometric approximation using piecewise polynomials.
+  Splits data at deviation points, fits each segment.
+  Best for: periodic/oscillating data
+
+  Example:
+  --------
+  import solverCan
+
+  # d(a) = (10+10cos(a))*(10+10sin(a)), 0-90 degrees
+  y = [200, 217.02, 232.95, 247.47, 260.31, 271.19, 279.9, 286.26,
+       290.12, 291.42, 290.12, 286.26, 279.9, 271.19, 260.31, 247.47,
+       232.95, 217.02, 200]
+  x = list(range(0, 95, 5))
+
+  r = solverCan.trig(y, x=x)
+  print(r['equation'])        # Two pieces: f1 [0-45], f2 [50-90]
+  print(r['method'])          # Piecewise (2 pieces)
+  print(r['pieces'])          # [(0, 45, coeffs1), (50, 90, coeffs2)]
+  print(r['compute'](30))     # ~279.85
+
+
+================================================================
+  4. TRIGONOMETRIC (Single Equation) — solverCan.trigOneEq(y)
+================================================================
+
+  Finds single combined equation using iterative correction.
+  f1 + f2 + ... = ftotal (not piecewise)
+  Good within training range, may diverge outside.
+
+  Example:
+  --------
+  import solverCan
+
+  y = [200, 203.475, 206.9169, 210.323, 213.6907,
+       217.0175, 220.3006, 223.5376, 226.726]
+  x = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+  # Auto iterations
+  r = solverCan.trigOneEq(y, x=x)
+  print(r['equation'])
+  print(r['iterations'])      # Number of iterations used
+
+  # Fixed 2 iterations (original method)
+  r2 = solverCan.trigOneEq(y, x=x, max_iter=2)
+  print(r2['equation'])
+
+  # Fixed 5 iterations
+  r3 = solverCan.trigOneEq(y, x=x, max_iter=5)
+  print(r3['equation'])
+
+
+================================================================
+  5. IRRATIONAL (Piecewise) — solverCan.irrational(y)
+================================================================
+
+  Finds irrational function approximation using piecewise polynomials.
+  Best for: data with sqrt, log, etc.
+
+  Example:
+  --------
+  import solverCan
+
+  # Data from f(x) = x^2 + 24 - sqrt(x)
+  y = [24.0, 26.5858, 31.2679, 38.0, 46.7639,
+       57.5505, 70.3542, 85.1716, 102.0, 120.8377]
+
+  r = solverCan.irrational(y)
+  print(r['equation'])        # f(x) = 1.04815*x^2 - 0.55865*x + 23.5105
+  print(r['method'])          # Piecewise (1 pieces)
+  print(r['compute'](90))     # ~8463.25 (actual: 8114.51, ~4.3% dev)
+
+
+================================================================
+  6. IRRATIONAL (Single Equation) — solverCan.irrationalOneEq(y)
+================================================================
+
+  Same as trigOneEq but named for irrational functions.
+
+  Example:
+  --------
+  import solverCan
+
+  y = [24.0, 26.5858, 31.2679, 38.0, 46.7639,
+       57.5505, 70.3542, 85.1716, 102.0, 120.8377]
+
+  r = solverCan.irrationalOneEq(y)
+  print(r['equation'])
+
+  # With fixed iterations
+  r2 = solverCan.irrationalOneEq(y, max_iter=3)
+  print(r2['equation'])
+
+
+================================================================
+  7. AUTO — solverCan.auto(y)
+================================================================
+
+  Tries all methods, picks the one with lowest deviation.
+  Best for: when you don't know the data type.
+
+  Example:
+  --------
+  import solverCan
+
+  y = [14, 13, 14, 17, 22, 29, 38, 49, 62, 77]
+
+  r = solverCan.auto(y)
+  print(r['equation'])        # f(x) = x^2 - 4*x + 17
+  print(r['method'])          # Polynomial (degree 2)
+
+  # See all methods tried
+  for name, info in r['all_results'].items():
+      print(f"  {name}: {info['method']} (max dev: {info['max_deviation']:.4f}%)")
+
+  # Output:
+  #   polynomial: Polynomial (degree 2) (max dev: 0.0000%)
+  #   exponential: Exponential (2 iterations) (max dev: 3.6847%)
+  #   iterative: Iterative Polynomial (1 iterations) (max dev: 0.0000%)
+  #   piecewise: Piecewise (1 pieces) (max dev: 0.0000%)
+
+
+================================================================
+  8. TABLE — solverCan.table(y, r['compute'])
+================================================================
+
+  Prints comparison table: original vs computed values.
+
+  Example:
+  --------
+  import solverCan
+
+  y = [14, 13, 14, 17, 22, 29, 38, 49, 62, 77]
+  r = solverCan.auto(y)
+
+  solverCan.table(y, r['compute'])
+
+  # Output:
+  #       x |       Original |       Computed |           Diff |      Dev %
+  #   -----------------------------------------------------------------
+  #       1 |        14.0000 |        14.0000 |       0.000000 |    0.0000%
+  #       2 |        13.0000 |        13.0000 |       0.000000 |    0.0000%
+  #   ...
+  #   Avg deviation: 0.0000%  |  Max deviation: 0.0000%
+
+  # With custom x values
+  solverCan.table(y, r['compute'], x=[1,2,3,4,5,6,7,8,9,10])
+
+
+================================================================
+  9. COMPARE GRAPH — solverCan.compare_graph(y, r['compute'])
+================================================================
+
+  Saves comparison chart as PNG file.
+  Upper panel: data points vs fitted curve
+  Lower panel: deviation percentage
+
+  Example:
+  --------
+  import solverCan
+
+  y = [14, 13, 14, 17, 22, 29, 38, 49, 62, 77]
+  r = solverCan.auto(y)
+
+  # Basic usage (saves as "solverCan_compare.png")
+  solverCan.compare_graph(y, r['compute'])
+
+  # Custom title
+  solverCan.compare_graph(y, r['compute'], title="Polynomial Analysis")
+
+  # Custom filename
+  solverCan.compare_graph(y, r['compute'], save_as="my_analysis.png")
+
+  # With custom x values
+  x = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45]
+  solverCan.compare_graph(y, r['compute'], x=x, title="Custom X")
+
+
+================================================================
+  10. CUSTOM X VALUES
+================================================================
+
+  All methods accept custom x values.
+  Default: x = [1, 2, 3, ..., len(y)]
+
+  Example:
+  --------
+  import solverCan
+
+  x = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45]
+  y = [200, 217.02, 232.95, 247.47, 260.31,
+       271.19, 279.9, 286.26, 290.12, 291.42]
+
+  r = solverCan.auto(y, x=x)
+  print(r['equation'])
+  print(r['compute'](50))     # Predict at x=50
+
+
+================================================================
+  11. PREDICTION (using compute)
+================================================================
+
+  r['compute'] is a function — call it with any x value.
+
+  Example:
+  --------
+  import solverCan
+
+  y = [50000.0, 51522.73, 53091.83, 54708.71, 56374.84,
+       58091.71, 59860.87, 61683.9, 63562.46, 65498.22]
+
+  r = solverCan.expo(y)
+
+  # Single prediction
+  print(r['compute'](15))     # Year 15
+
+  # Multiple predictions
+  for t in range(10, 31):
+      print(f"  Year {t}: {r['compute'](t):,.2f}")
+
+
+================================================================
+  12. RESULT FIELDS SUMMARY
+================================================================
+
+  All methods return a dict with:
+
+    r['equation']       String: the equation found
+    r['compute']        Function: call with x to get prediction
+    r['method']         String: method name used
+
+  Additional fields by method:
+
+    plynm:
+      r['coefficients']   List: [a0, a1, a2, ...]
+      r['degree']         Int: polynomial degree
+
+    expo:
+      r['parts']          List: [(A, a, c), ...] for A*e^(a*x)+c
+
+    trig / irrational:
+      r['pieces']         List: [(x_start, x_end, coeffs), ...]
+
+    trigOneEq / irrationalOneEq:
+      r['coefficients']   List: combined polynomial coefficients
+      r['iterations']     Int: number of iterations used
+
+    auto:
+      r['all_results']    Dict: all methods with their deviations
+
+
+================================================================
+  13. WHICH METHOD TO USE
+================================================================
+
+  Data Type          Method                   Accuracy
+  ----------------------------------------------------------------
+  Polynomial         solverCan.plynm(y)       Exact (0% dev)
+  Exponential        solverCan.expo(y)        Very high (<0.01%)
+  Trigonometric      solverCan.trig(y)        High (<2-5%)
+  Irrational         solverCan.irrational(y)  High (<2-5%)
+  Unknown            solverCan.auto(y)        Picks best method
+  Single equation    solverCan.trigOneEq(y)   Good in training range
+
+  Tips:
+  - Use auto(y) when you don't know the data type
+  - Use expo(y) for growth/decay data
+  - Use trig(y) for oscillating data
+  - Use plynm(y) when you suspect polynomial
+  - trigOneEq gives single equation, trig gives piecewise
+  - More data points = better accuracy
+  - max_iter parameter controls iteration depth for OneEq methods
+
+
+================================================================
+  14. FULL WORKFLOW EXAMPLE
+================================================================
+
+  import solverCan
+
+  # Step 1: Your data
+  y = [5.8235, 11.308, 16.473, 21.3372, 25.9182,
+       30.2324, 34.2953, 38.1217, 41.7252, 45.1188]
+
+  # Step 2: Auto-detect best method
+  r = solverCan.auto(y)
+  print(f"Method: {r['method']}")
+  print(f"Equation: {r['equation']}")
+
+  # Step 3: See accuracy
+  solverCan.table(y, r['compute'])
+
+  # Step 4: Save comparison chart
+  solverCan.compare_graph(y, r['compute'], title="My Analysis")
+
+  # Step 5: Make predictions
+  for x in range(11, 16):
+      print(f"  x={x}: {r['compute'](x):.4f}")
+
+  # Step 6: Compare all methods
+  for name, info in r['all_results'].items():
+      print(f"  {name}: max dev {info['max_deviation']:.4f}%")

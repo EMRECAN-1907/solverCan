@@ -1,0 +1,84 @@
+================================================================
+  solverCan — Documentation
+  Mathematical Function Solver from Dataset
+  Version: 0.1.0
+================================================================
+
+
+1. METHODS (find equation from data)
+================================================================
+
+  r = solverCan.plynm(y)            Polynomial
+  r = solverCan.expo(y)             Exponential
+  r = solverCan.trig(y)             Trigonometric (piecewise)
+  r = solverCan.irrational(y)       Irrational (piecewise)
+  r = solverCan.auto(y)             Auto-select best method
+
+
+2. RESULT FIELDS (access from r)
+================================================================
+
+  r['equation']                     Equation string: "f(x) = x^2 - 4*x + 17"
+  r['compute'](15)                  Compute value at x=15: 182.0
+  r['method']                       Method name: "Polynomial (degree 2)"
+  r['coefficients']                 Coefficients (plynm only): [17, -4, 1]
+  r['degree']                       Degree (plynm only): 2
+  r['parts']                        Exponential parts (expo only): [(A, a, c), ...]
+  r['pieces']                       Pieces (trig/irrational only): [(x_start, x_end, coeffs), ...]
+  r['all_results']                  All methods comparison (auto only)
+
+
+3. VISUALIZATION
+================================================================
+
+  solverCan.table(y, r['compute'])                            Comparison table
+  solverCan.compare_graph(y, r['compute'])                    Save comparison chart (PNG)
+  solverCan.compare_graph(y, r['compute'], title="Test")      Custom title
+  solverCan.compare_graph(y, r['compute'], save_as="a.png")   Custom filename
+
+
+4. CUSTOM X VALUES
+================================================================
+
+  x = [0, 5, 10, 15, 20]
+  y = [100, 250, 380, 470, 520]
+  r = solverCan.auto(y, x=x)
+
+
+5. FULL EXAMPLE
+================================================================
+
+  import solverCan
+
+  # Data
+  y = [14, 13, 14, 17, 22, 29, 38, 49, 62, 77]
+
+  # Auto solve
+  r = solverCan.auto(y)
+
+  # Results
+  print(r['equation'])              # f(x) = x^2 - 4*x + 17
+  print(r['method'])                # Polynomial (degree 2)
+  print(r['compute'](15))           # 182.0
+
+  # Show all methods tried
+  for name, info in r['all_results'].items():
+      print(f"{name}: {info['method']} (max dev: {info['max_deviation']:.4f}%)")
+
+  # Table
+  solverCan.table(y, r['compute'])
+
+  # Graph
+  solverCan.compare_graph(y, r['compute'], title="My Analysis")
+
+
+6. WHICH METHOD FOR WHAT
+================================================================
+
+  Data Type          Best Method           Example
+  ----------------------------------------------------------------
+  Polynomial         solverCan.plynm(y)    x^2 - 4x + 17
+  Exponential        solverCan.expo(y)     100 - 100*e^(-0.06x)
+  Trigonometric      solverCan.trig(y)     50*sin(x) + 100
+  Irrational         solverCan.irrational(y)   x^2 + 5x + sqrt(x)
+  Unknown            solverCan.auto(y)     Tries all, picks best
